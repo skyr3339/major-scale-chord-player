@@ -7,6 +7,7 @@ A self-contained browser app for vocal practice through chromatically changing m
 - Plays a tonic major triad, then a user-defined major-scale note sequence, then the tonic triad again.
 - Advances from the chosen starting tonic to the ending tonic one semitone at a time.
 - Saves named sequences locally in the browser.
+- Imports multiple sequences from pasted `Name_(degrees)` lines, reporting any invalid lines without blocking valid imports.
 - Supports degrees `1`–`7` and octave degrees such as `8` and `9`.
 - Includes typed BPM, pause/resume and stop controls.
 - Uses locally generated Web Audio piano-style sound, with four selectable piano voicings.
