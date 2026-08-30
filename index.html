@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Major Scale Chord Player</title>
+  <style>
+    :root { color-scheme: dark; --ink:#f5f4f8; --muted:#aaa7b4; --card:#1c1c25; --card-2:#252530; --line:#3b3a49; --accent:#8b7cff; --accent-2:#b9afff; --danger:#fa7595; --good:#73d6a5; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; font:16px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink); background:radial-gradient(1000px 500px at 10% -10%, #413779 0%, transparent 60%), #111119; }
+    main { width:min(1050px, calc(100% - 32px)); margin:0 auto; padding:52px 0 42px; }
+    h1,h2,p { margin-top:0; } h1 { letter-spacing:-.045em; font-size:clamp(2rem, 5vw, 3.5rem); margin-bottom:8px; } h2 { font-size:1.05rem; margin-bottom:18px; } .lead { color:var(--muted); max-width:720px; margin-bottom:30px; }
+    .grid { display:grid; grid-template-columns:1.08fr .92fr; gap:18px; } .card { background:linear-gradient(145deg, rgba(38,37,49,.98), rgba(25,25,34,.98)); border:1px solid var(--line); box-shadow:0 18px 50px rgba(0,0,0,.16); border-radius:18px; padding:22px; }
+    .wide { grid-column:1 / -1; } .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; } label { display:block; color:#d9d6e5; font-size:.84rem; font-weight:650; letter-spacing:.02em; } label span { display:block; color:var(--muted); font-weight:400; font-size:.76rem; margin:3px 0 6px; }
+    input, select, button { font:inherit; } input, select { width:100%; border:1px solid #4b4a5d; border-radius:10px; padding:10px 11px; color:var(--ink); background:#15151d; outline:none; } input:focus, select:focus { border-color:var(--accent-2); box-shadow:0 0 0 3px rgba(139,124,255,.16); } input[type=number] { appearance:textfield; }
+    .sequence-input { font-family:"SFMono-Regular", Consolas, monospace; letter-spacing:.04em; } .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:19px; } button { border:0; border-radius:10px; padding:10px 14px; color:var(--ink); background:#3a3949; cursor:pointer; font-weight:700; transition:transform .14s, background .14s, opacity .14s; } button:hover:not(:disabled) { transform:translateY(-1px); background:#4b4a60; } button:disabled { cursor:not-allowed; opacity:.43; } .primary { color:#120e24; background:linear-gradient(135deg, var(--accent-2), #8170ff); } .primary:hover:not(:disabled) { background:linear-gradient(135deg, #c7bfff, #9183ff); } .danger { color:#ffdbe4; background:#5b2839; } .danger:hover:not(:disabled) { background:#743047; }
+    .preset-row { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; } .help { margin:11px 0 0; color:var(--muted); font-size:.83rem; } .status { display:flex; align-items:center; gap:10px; min-height:57px; padding:12px 14px; background:#15151d; border:1px solid var(--line); border-radius:12px; } .dot { width:10px; height:10px; border-radius:50%; flex:0 0 auto; background:#777583; box-shadow:0 0 0 4px rgba(119,117,131,.14); } .dot.playing { background:var(--good); box-shadow:0 0 0 4px rgba(115,214,165,.14); } .dot.paused { background:#ffcf6f; box-shadow:0 0 0 4px rgba(255,207,111,.14); } #statusText { color:#d8d5e0; } #progressText { margin-left:auto; color:var(--muted); font-size:.85rem; text-align:right; }
+    .piano { position:relative; display:block; height:164px; margin-top:22px; overflow:hidden; border-radius:12px; background:#0c0c11; border:1px solid #333241; } .key { position:absolute; top:0; bottom:0; z-index:1; border:1px solid #777382; border-bottom:6px solid #aaa6b0; border-radius:0 0 4px 4px; background:linear-gradient(#fff, #d6d3dc); } .key.active { background:linear-gradient(#c6bdff, #8b7cff); border-bottom-color:#7665ec; } .key.black { z-index:2; top:0; bottom:auto; height:62%; border:1px solid #08080d; border-bottom:5px solid #000; border-radius:0 0 4px 4px; background:linear-gradient(#3c3b4c, #0c0c11); } .key.black.active { background:linear-gradient(#b9afff, #6958d7); }
+    .error { color:#ffafbf; min-height:1.25em; font-size:.87rem; margin:12px 0 0; } .footer-note { color:#8f8c9b; font-size:.78rem; margin:16px 2px 0; }
+    @media (max-width:720px) { main { width:min(100% - 22px, 1050px); padding-top:30px; } .grid { grid-template-columns:1fr; } .wide { grid-column:auto; } .fields { grid-template-columns:1fr; } .preset-row { grid-template-columns:1fr; } .status { align-items:flex-start; } #progressText { margin-left:0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Major Scale Chord Player</h1>
+    <p class="lead">A calm, legato piano practice companion. Each number plays its corresponding <strong>single note</strong> in the current major scale; a tonic major triad frames every sequence.</p>
+    <div class="grid">
+      <section class="card">
+        <h2>Practice range</h2>
+        <div class="fields">
+          <label>Start tonic <span>Examples: F3, C#4, Bb2</span><input id="startNote" value="F3" autocomplete="off" spellcheck="false" /></label>
+          <label>End tonic <span>Inclusive; moves chromatically upward</span><input id="endNote" value="F6" autocomplete="off" spellcheck="false" /></label>
+          <label>Tempo (BPM) <span>Quarter-note pulse; type a value</span><input id="bpm" type="number" min="20" max="300" value="72" /></label>
+          <label>Chord voicing <span>Spread keeps the harmony clear</span><select id="voicing"><option value="close">Close triads</option><option value="spread" selected>Spread triads</option></select></label>
+          <label>Instrument <span>Local piano-style synthesis</span><select id="instrument"><option value="concert" selected>Concert grand</option><option value="upright">Warm upright</option><option value="studio">Bright studio grand</option><option value="felt">Mellow felt piano</option></select></label>
+        </div>
+        <p class="help">Start and end are the roots of the keys, not the highest note played. Practical piano range: A0–C8.</p>
+      </section>
+      <section class="card">
+        <h2>Saved sequences</h2>
+        <div class="preset-row">
+          <label>Choose a sequence <span>Stored in this browser</span><select id="presetSelect" aria-label="Choose saved sequence"></select></label>
+          <button id="loadPreset">Load</button>
+        </div>
+        <div class="actions"><button id="deletePreset" class="danger">Delete selected</button></div>
+        <p class="help">Saving or editing never needs an account. Your library is stored using local browser storage.</p>
+      </section>
+      <section class="card wide">
+        <h2>Sequence editor</h2>
+        <div class="fields">
+          <label>Sequence name <span>Use a memorable practice label</span><input id="sequenceName" value="Ascending & descending" maxlength="80" /></label>
+          <label>Scale degrees <span>Space or comma separated: 1–7; 8 = octave; larger degrees continue naturally</span><input class="sequence-input" id="sequenceDegrees" value="1 2 3 4 5 5 4 3 2 1" autocomplete="off" /></label>
+        </div>
+        <div class="actions"><button id="saveNew">Save as new</button><button id="updatePreset">Update selected</button></div>
+        <p class="help">Each entered number plays one note from the current major scale (e.g. 2 plays re). Only the opening and closing events are tonic major triads. Repeated numbers are played as repeated legato notes.</p>
+      </section>
+      <section class="card wide">
+        <h2>Playback</h2>
+        <div class="status" aria-live="polite"><i id="statusDot" class="dot"></i><span id="statusText">Ready to begin.</span><span id="progressText">—</span></div>
+        <div class="piano" id="piano" aria-hidden="true"></div>
+        <div class="actions"><button id="play" class="primary">Play</button><button id="pause" disabled>Pause</button><button id="stop" disabled>Stop</button></div>
+        <p id="error" class="error" role="alert"></p>
+      </section>
+    </div>
+    <p class="footer-note">Audio is generated entirely in your browser: a layered piano-style synthesis with a gentle hammer transient, sustain and room ambience. Headphones are recommended.</p>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const ids = ['startNote','endNote','bpm','voicing','instrument','presetSelect','loadPreset','deletePreset','sequenceName','sequenceDegrees','saveNew','updatePreset','play','pause','stop','statusDot','statusText','progressText','error','piano'];
+    const el = Object.fromEntries(ids.map(id => [id, $(id)]));
+    const STORAGE_KEY = 'major-scale-chord-player.presets.v1';
+    const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const MAJOR = [0,2,4,5,7,9,11];
+    const INSTRUMENTS = {
+      concert: { partials:[[1,.82,'triangle'],[2,.22,'sine'],[3,.12,'sine'],[4,.055,'sine'],[5,.025,'sine']], peak:.17, body:.075, sustain:.028, attack:.018, release:.42, hammer:.05, brightness:6500 },
+      upright: { partials:[[1,.76,'triangle'],[2,.17,'sine'],[3,.08,'sine'],[4,.025,'sine']], peak:.15, body:.072, sustain:.032, attack:.024, release:.34, hammer:.035, brightness:3900 },
+      studio: { partials:[[1,.72,'triangle'],[2,.28,'sine'],[3,.16,'sine'],[4,.075,'sine'],[5,.04,'sine'],[6,.018,'sine']], peak:.16, body:.065, sustain:.022, attack:.011, release:.38, hammer:.07, brightness:9000 },
+      felt: { partials:[[1,.8,'sine'],[2,.12,'sine'],[3,.035,'sine']], peak:.135, body:.06, sustain:.025, attack:.04, release:.5, hammer:.014, brightness:2400 }
+    };
+    let audio = null, master = null, reverb = null;
+    let session = null, selectedId = null, activeVoices = [], pianoKeys = [];
+
+    function uid() { return `${Date.now()}-${Math.random().toString(36).slice(2,9)}`; }
+    function defaultPresets() { return [{ id:uid(), name:'Ascending & descending', degrees:[1,2,3,4,5,5,4,3,2,1] }]; }
+    function getPresets() {
+      try { const p = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (Array.isArray(p) && p.length) return p; } catch {}
+      const presets = defaultPresets();
+      try { savePresets(presets); } catch {}
+      return presets;
+    }
+    function savePresets(presets) { localStorage.setItem(STORAGE_KEY, JSON.stringify(presets)); }
+    function parseDegrees(value) {
+      const parts = value.trim().split(/[\s,]+/).filter(Boolean);
+      if (!parts.length) throw new Error('Enter at least one scale degree.');
+      const degrees = parts.map((part) => {
+        if (!/^\d+$/.test(part)) throw new Error(`“${part}” is not a whole-number scale degree.`);
+        const n = Number(part);
+        if (n < 1 || n > 49) throw new Error('Use scale degrees from 1 through 49.');
+        return n;
+      });
+      return degrees;
+    }
+    function parseNote(value) {
+      const match = value.trim().replace(/♯/g,'#').replace(/♭/g,'b').match(/^([A-Ga-g])([#b]?)(-?\d+)$/);
+      if (!match) throw new Error(`“${value}” is not a note such as F3, C#4, or Bb2.`);
+      const letter = match[1].toUpperCase(), accidental = match[2], octave = Number(match[3]);
+      const base = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[letter];
+      const pitch = (base + (accidental === '#' ? 1 : accidental === 'b' ? -1 : 0) + 12) % 12;
+      const midi = (octave + 1) * 12 + pitch;
+      if (midi < 21 || midi > 108) throw new Error('Choose tonics within the piano range A0–C8.');
+      return midi;
+    }
+    function noteName(midi) { return `${NOTE_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`; }
+    function noteForDegree(tonicMidi, degree) {
+      const zeroBased = degree - 1;
+      const octave = Math.floor(zeroBased / 7);
+      const scaleDegree = zeroBased % 7;
+      return tonicMidi + MAJOR[scaleDegree] + 12 * octave;
+    }
+    function tonicTriad(tonicMidi, spread) { return spread ? [tonicMidi - 12, tonicMidi + 4, tonicMidi + 7] : [tonicMidi, tonicMidi + 4, tonicMidi + 7]; }
+    function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+    function setError(message = '') { el.error.textContent = message; }
+    function setStatus(text, state = 'ready', progress = '—') { el.statusText.textContent = text; el.progressText.textContent = progress; el.statusDot.className = `dot ${state === 'playing' ? 'playing' : state === 'paused' ? 'paused' : ''}`; }
+
+    function buildPiano() {
+      const whitePitches = [0,2,4,5,7,9,11], firstMidi = 21, lastMidi = 108, whiteCount = 52, whiteWidth = 100 / whiteCount, blackWidth = whiteWidth * .62;
+      let whiteIndex = 0;
+      for (let midi = firstMidi; midi <= lastMidi; midi++) {
+        const pitch = midi % 12, black = !whitePitches.includes(pitch);
+        const key = document.createElement('i'); key.className = `key${black ? ' black' : ''}`; key.dataset.midi = midi; key.title = noteName(midi);
+        if (black) { key.style.width = `${blackWidth}%`; key.style.left = `${whiteIndex * whiteWidth - blackWidth / 2}%`; }
+        else { key.style.width = `${whiteWidth}%`; key.style.left = `${whiteIndex * whiteWidth}%`; whiteIndex++; }
+        el.piano.append(key); pianoKeys.push(key);
+      }
+    }
+    function highlight(notes) {
+      pianoKeys.forEach(key => key.classList.toggle('active', notes.includes(Number(key.dataset.midi))));
+    }
+    function createReverb(ctx) {
+      const length = Math.floor(ctx.sampleRate * 1.55), buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+      for (let channel = 0; channel < 2; channel++) { const data = buffer.getChannelData(channel); for (let i=0; i<length; i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/length, 2.8); }
+      const convolver = ctx.createConvolver(); convolver.buffer = buffer; return convolver;
+    }
+    async function ensureAudio() {
+      if (!audio) {
+        audio = new (window.AudioContext || window.webkitAudioContext)();
+        master = audio.createGain(); master.gain.value = .72;
+        const dry = audio.createGain(); dry.gain.value = .84; reverb = createReverb(audio); const wet = audio.createGain(); wet.gain.value = .18;
+        master.connect(dry).connect(audio.destination); master.connect(reverb).connect(wet).connect(audio.destination);
+      }
+      if (audio.state !== 'running') await audio.resume();
+    }
+    function playPianoNote(midi, duration) {
+      if (midi < 21 || midi > 120) return;
+      const now = audio.currentTime, freq = midiToFreq(midi), voice = { nodes:[] }, instrument = INSTRUMENTS[el.instrument.value] || INSTRUMENTS.concert;
+      const bus = audio.createGain(), tone = audio.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = Math.min(instrument.brightness, freq * 10); tone.Q.value = .55;
+      bus.gain.setValueAtTime(.0001, now); bus.gain.exponentialRampToValueAtTime(instrument.peak, now + instrument.attack); bus.gain.exponentialRampToValueAtTime(instrument.body, now + .11); bus.gain.exponentialRampToValueAtTime(instrument.sustain, now + Math.min(.55, duration*.75)); bus.gain.exponentialRampToValueAtTime(.0001, now + duration + instrument.release); bus.connect(tone).connect(master); voice.nodes.push(bus,tone);
+      instrument.partials.forEach(([ratio, level, type]) => {
+        const osc = audio.createOscillator(), gain = audio.createGain(); osc.type = type; osc.frequency.value = freq * ratio; gain.gain.value = level / Math.pow(ratio, .52); osc.connect(gain).connect(bus); osc.start(now); osc.stop(now + duration + instrument.release + .06); voice.nodes.push(osc,gain);
+      });
+      const hammer = audio.createBufferSource(), noise = audio.createBuffer(1, Math.floor(audio.sampleRate*.03), audio.sampleRate), noiseGain = audio.createGain(), filter = audio.createBiquadFilter();
+      const noiseData = noise.getChannelData(0); for (let i=0;i<noiseData.length;i++) noiseData[i]=(Math.random()*2-1)*Math.pow(1-i/noiseData.length,2);
+      hammer.buffer=noise; filter.type='bandpass'; filter.frequency.value=Math.min(instrument.brightness, freq*7); filter.Q.value=1.2; noiseGain.gain.value=instrument.hammer; hammer.connect(filter).connect(noiseGain).connect(bus); hammer.start(now); voice.nodes.push(hammer,noiseGain,filter);
+      activeVoices.push(voice); setTimeout(() => { activeVoices = activeVoices.filter(v => v !== voice); }, (duration + instrument.release + .3) * 1000);
+    }
+    function silence() { activeVoices.forEach(voice => voice.nodes.forEach(node => { try { if (typeof node.stop === 'function') node.stop(); else if (node.disconnect) node.disconnect(); } catch {} })); activeVoices=[]; highlight([]); }
+    function currentSettings() {
+      const start = parseNote(el.startNote.value), end = parseNote(el.endNote.value); if (end < start) throw new Error('The ending tonic must be the same as or higher than the starting tonic.');
+      const bpm = Number(el.bpm.value); if (!Number.isFinite(bpm) || bpm < 20 || bpm > 300) throw new Error('Tempo must be between 20 and 300 BPM.');
+      return { start, end, bpm, degrees:parseDegrees(el.sequenceDegrees.value), spread:el.voicing.value === 'spread' };
+    }
+    const nap = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    async function waitBeat(ms, run) {
+      let remaining = ms, last = performance.now();
+      while (remaining > 0 && !run.stopped) {
+        if (run.paused) { await nap(70); last = performance.now(); continue; }
+        const slice = Math.min(remaining, 35); await nap(slice); const now = performance.now(); remaining -= now - last; last = now;
+      }
+    }
+    async function perform() {
+      let settings;
+      try { settings = currentSettings(); await ensureAudio(); } catch (error) { setError(error.message); return; }
+      setError('');
+      const run = { stopped:false, paused:false }; session = run;
+      el.play.disabled = true; el.pause.disabled = false; el.stop.disabled = false; el.pause.textContent = 'Pause';
+      const keyCount = settings.end - settings.start + 1, eventCount = settings.degrees.length + 2, beatMs = 60000 / settings.bpm;
+      for (let tonic = settings.start, keyIndex = 0; tonic <= settings.end && !run.stopped; tonic++, keyIndex++) {
+        const events = [{kind:'Tonic triad', notes:tonicTriad(tonic, settings.spread)}, ...settings.degrees.map((degree, index) => ({kind:`Degree ${degree}`, degree, index, notes:[noteForDegree(tonic, degree)]})), {kind:'Tonic triad', notes:tonicTriad(tonic, settings.spread)}];
+        for (let i = 0; i < events.length && !run.stopped; i++) {
+          while (run.paused && !run.stopped) await nap(70);
+          if (run.stopped) break;
+          const event = events[i], position = `${keyIndex + 1}/${keyCount} · ${i + 1}/${eventCount}`;
+          setStatus(`${noteName(tonic)} major — ${event.kind}`, 'playing', position); highlight(event.notes); event.notes.forEach(note => playPianoNote(note, beatMs / 1000 * 1.22));
+          await waitBeat(beatMs, run);
+        }
+      }
+      if (session === run) { session = null; silence(); el.play.disabled=false; el.pause.disabled=true; el.stop.disabled=true; setStatus(run.stopped ? 'Stopped.' : 'Finished.', 'ready'); }
+    }
+    function togglePause() {
+      if (!session) return;
+      session.paused = !session.paused;
+      if (session.paused) { audio?.suspend(); el.pause.textContent='Resume'; setStatus('Paused — ready to continue.', 'paused', el.progressText.textContent); }
+      else { audio?.resume(); el.pause.textContent='Pause'; setStatus('Resuming…', 'playing', el.progressText.textContent); }
+    }
+    function stop() { if (!session) return; session.stopped=true; if (audio?.state === 'suspended') audio.resume(); silence(); }
+    function renderPresets(selectId) {
+      const presets = getPresets(); el.presetSelect.replaceChildren(); presets.forEach(p => { const option=document.createElement('option'); option.value=p.id; option.textContent=`${p.name} — ${p.degrees.join(' ')}`; el.presetSelect.append(option); });
+      selectedId = presets.some(p=>p.id===selectId) ? selectId : presets[0]?.id ?? null; el.presetSelect.value=selectedId || '';
+    }
+    function loadSelected() { const p=getPresets().find(item=>item.id===el.presetSelect.value); if (!p) return; selectedId=p.id; el.sequenceName.value=p.name; el.sequenceDegrees.value=p.degrees.join(' '); setError(''); }
+    function readEditor() { const name=el.sequenceName.value.trim(); if (!name) throw new Error('Give the sequence a name before saving.'); return {name:name.slice(0,80), degrees:parseDegrees(el.sequenceDegrees.value)}; }
+    function saveNew() { try { const entry={id:uid(),...readEditor()}, presets=getPresets(); presets.push(entry); savePresets(presets); renderPresets(entry.id); setError(`Saved “${entry.name}”.`); } catch (error) { setError(error.message); } }
+    function updateSelected() { try { if (!selectedId) throw new Error('Select a saved sequence to update.'); const entry=readEditor(), presets=getPresets(), index=presets.findIndex(p=>p.id===selectedId); if (index<0) throw new Error('That saved sequence is no longer available.'); presets[index]={id:selectedId,...entry}; savePresets(presets); renderPresets(selectedId); setError(`Updated “${entry.name}”.`); } catch (error) { setError(error.message); } }
+    function deleteSelected() { const p=getPresets().find(item=>item.id===el.presetSelect.value); if (!p) return; const presets=getPresets().filter(item=>item.id!==p.id); if (!presets.length) presets.push(...defaultPresets()); savePresets(presets); renderPresets(); loadSelected(); setError(`Deleted “${p.name}”.`); }
+    el.loadPreset.addEventListener('click', loadSelected); el.presetSelect.addEventListener('change', loadSelected); el.saveNew.addEventListener('click', saveNew); el.updatePreset.addEventListener('click', updateSelected); el.deletePreset.addEventListener('click', deleteSelected); el.play.addEventListener('click', perform); el.pause.addEventListener('click', togglePause); el.stop.addEventListener('click', stop);
+    buildPiano(); renderPresets(); loadSelected();
+  })();
+  </script>
+</body>
+</html>

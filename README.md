@@ -1,2 +1,31 @@
-# major-scale-chord-player
-Major Scale Chord Player
+# Major Scale Chord Player
+
+A self-contained browser app for vocal practice through chromatically changing major keys.
+
+## What it does
+
+- Plays a tonic major triad, then a user-defined major-scale note sequence, then the tonic triad again.
+- Advances from the chosen starting tonic to the ending tonic one semitone at a time.
+- Saves named sequences locally in the browser.
+- Supports degrees `1`–`7` and octave degrees such as `8` and `9`.
+- Includes typed BPM, pause/resume and stop controls.
+- Uses locally generated Web Audio piano-style sound, with four selectable piano voicings.
+- Shows an 88-key A0–C8 piano keyboard.
+
+## Run locally
+
+Open `index.html` in a modern browser. No installation, server, audio downloads, or build step is required.
+
+## Publish with GitHub Pages
+
+1. Create an empty GitHub repository.
+2. Upload the contents of this folder: `index.html`, `README.md`, and `.gitignore`.
+3. In the repository, open **Settings → Pages**.
+4. Choose **Deploy from a branch**, then select the `main` branch and the `/ (root)` folder.
+5. Save. GitHub will provide a public URL after deployment.
+
+The app uses browser local storage for saved sequences, so each visitor keeps their own sequence library in their browser.
+
+## License
+
+You may use, modify, and publish this project for personal or commercial purposes.
