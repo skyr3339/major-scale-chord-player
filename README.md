@@ -15,6 +15,10 @@ A self-contained browser app for vocal practice through chromatically changing m
 - Uses locally generated Web Audio piano-style sound, with four selectable piano voicings.
 - Shows an 88-key A0–C8 piano keyboard.
 
+## Run locally
+
+Open `index.html` in a modern browser. No installation, server, audio downloads, or build step is required.
+
 ## License
 
 You may use, modify, and publish this project for personal or commercial purposes.
